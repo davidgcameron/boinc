@@ -195,9 +195,8 @@ function tra($text /* ...arglist... */) {
     for ($i=1; $i<func_num_args(); $i++){
         $replacements["%".$i] = func_get_arg($i);
     }
-    $text = strtr($text, $replacements);
 
-    return $text;
+    return strtr($text, $replacements);
 }
 
 function tr_specific($text, $language) {
