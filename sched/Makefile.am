@@ -111,6 +111,7 @@ schedshare_PROGRAMS = \
     file_deleter \
     message_handler \
     sample_assimilator \
+    atlas_assimilator \
     sample_bitwise_validator \
     sample_dummy_assimilator \
     sample_substr_validator \
@@ -243,6 +244,10 @@ sample_dummy_assimilator_LDADD = $(SERVERLIBS)
 sample_assimilator_SOURCES = $(ASSIMILATOR_SOURCES) \
 	sample_assimilator.cpp
 sample_assimilator_LDADD = $(SERVERLIBS)
+
+atlas_assimilator_SOURCES = $(ASSIMILATOR_SOURCES) \
+	atlas_assimilator.cpp
+atlas_assimilator_LDADD = $(SERVERLIBS)
 
 single_job_assimilator_SOURCES = $(ASSIMILATOR_SOURCES) \
 	single_job_assimilator.cpp
