@@ -1,13 +1,26 @@
 #!/usr/bin/env python
+#
+# Validation script for ATLAS WU
+# The script_validator should be configured to all this script like this:
+# script_validator --app ATLAS --init_script "atlas_validator.py files runtime" --compare_script "true"
+#
+# Arguments: <output files> <CPU time>
+#
 import commands
 import xml.dom.minidom
 import os, sys, tarfile, re
 
-
-if len(sys.argv) != 3:
+# Check for one or two output files
+if len(sys.argv) not in [3, 4]:
     sys.exit(-1)
 ResultFile = sys.argv[1]
-boinccputime = float(sys.argv[2])
+if len(sys.argv) == 4:
+    print "Separate HITS file"
+    HitsFile = sys.argv[2]
+else:
+    print "HITS in tarball"
+    HitsFile = None
+boinccputime = float(sys.argv[-1])
 print "CPU time from BOINC: %d" % boinccputime
 
 jid = os.path.basename(ResultFile).split("_")[0]
@@ -50,19 +63,19 @@ except:
 if s:
     t1.extract(s, path=Edir)
 else:
-   print 'Failed to extract from jobSmallFiles.tgz'
-   if boinccputime > 900 or walltime > 3600:
-      print 'CPU or walltime is large enough, job is validated'
-      sys.exit(0)
-   sys.exit(1)
+    print 'Failed to extract from jobSmallFiles.tgz'
+    if boinccputime > 900 or walltime > 3600:
+        print 'CPU or walltime is large enough, job is validated'
+        sys.exit(0)
+    sys.exit(1)
 if os.path.exists("%s/jobSmallFiles.tgz"%Edir):
     t2 = tarfile.open("%s/jobSmallFiles.tgz"%Edir, "r:gz")
     m = t2.getmember("metadata-surl.xml")
     if m:
-	t2.extract(m, path=Edir)
+        t2.extract(m, path=Edir)
     else:
-	print "metadata-surl.xml does not exist!"
-	sys.exit(1)
+        print "metadata-surl.xml does not exist!"
+        sys.exit(1)
 else:
     print "jobSmallFiles.tgz does not exisit!"
     sys.exit(1)
@@ -76,40 +89,46 @@ outputxml = xml.dom.minidom.parse(MetaFile)
 files = outputxml.getElementsByTagName("POOLFILECATALOG")[0].getElementsByTagName("File")
 for f in files:
     try:
-	for m in  f.getElementsByTagName ("metadata"):
+        for m in  f.getElementsByTagName ("metadata"):
             v = m.getAttribute("att_value")
-	    if m.getAttribute("att_name") == "surl":
+            if m.getAttribute("att_name") == "surl":
                 surl = v
-		print "surl=%s"%surl
-		sfile = surl.split("/")[-1]
-		if sfile.find(".job.log.tgz") >= 0:
-		    try:
-			ff = t1.getmember("./%s"%sfile)
-		        print "./%s file exist!" %sfile
-			LOG = 1
-		    except:
-			try:
-			    ff = t1.getmember(sfile)
-			    LOG = 1
-		            print "%s file exist!" %sfile
-			except:
-			    print "%s is in metadata-surl.xml, but not in the tar.gz file"%sfile
+                print "surl=%s"%surl
+                sfile = surl.split("/")[-1]
+                if sfile.find(".job.log.tgz") >= 0:
+                    try:
+                        ff = t1.getmember("./%s"%sfile)
+                        print "./%s file exist!" %sfile
+                        LOG = 1
+                    except:
+                        try:
+                            ff = t1.getmember(sfile)
+                            LOG = 1
+                            print "%s file exist!" %sfile
+                        except:
+                            print "%s is in metadata-surl.xml, but not in the tar.gz file"%sfile
 
-		elif sfile.find(".root.") >=0:
-		    try:
-			ff = t1.getmember("./%s"%sfile)
-		        print "./%s file exist!" %sfile
-			ROOT = 1
-		    except:
-			try:
-			    ff = t1.getmember(sfile)
-			    ROOT = 1
-		            print "%s file exist!" %sfile
-			except:
-			    print "%s is in metadata-surl.xml, but not in the tar.gz file"%sfile
+                elif sfile.find(".root.") >=0:
+                    # Separate HITS file
+                    if HitsFile:
+                        if os.path.exists(HitsFile):
+                            ROOT = 1
+                    # HITS inside tar
+                    else:
+                        try:
+                            ff = t1.getmember("./%s"%sfile)
+                            print "./%s file exist!" %sfile
+                            ROOT = 1
+                        except:
+                            try:
+                                ff = t1.getmember(sfile)
+                                ROOT = 1
+                                print "%s file exist!" %sfile
+                            except:
+                                print "%s is in metadata-surl.xml, but not in the tar.gz file"%sfile
 
     except Exception, x:
-	print "failed to parse the xml file"
+        print "failed to parse the xml file"
 #os.rmdir(Edir)
 t1.close()
 t2.close()
@@ -128,3 +147,4 @@ if boinccputime > 1500 or walltime > 3600:
 
 print 'An output file is missing, and cputime<15minutes , validation failed!'
 sys.exit(1)
+
