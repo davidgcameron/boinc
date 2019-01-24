@@ -69,11 +69,11 @@ int assimilate_handler(
         OUTPUT_FILE_INFO& fi = output_files[0];
         if (output_files.size() == 2) { // HITS is separate
             OUTPUT_FILE_INFO& fi2 = output_files[1];
-            sprintf(cmd, "if [ -d %s ]; then /bin/tar xvf %s -C %s && /bin/rm -f %s; mv %s/%s.diag %s/; mv %s %s/HITS.pool.root.1 fi", dest_dir, fi.path.c_str(), dest_dir, fi.path.c_str(), dest_dir, wu.name, outdir, fi2.path.c_str(), dest_dir);
+            sprintf(cmd, "if [ -d %s ]; then /bin/tar xvf %s -C %s && /bin/rm -f %s; mv %s/%s.diag %s/; mv %s %s/HITS.pool.root.1; fi", dest_dir, fi.path.c_str(), dest_dir, fi.path.c_str(), dest_dir, wu.name, outdir, fi2.path.c_str(), dest_dir);
         } else {
             sprintf(cmd, "if [ -d %s ]; then /bin/tar xvf %s -C %s && /bin/rm -f %s; mv %s/%s.diag %s/; fi", dest_dir, fi.path.c_str(), dest_dir, fi.path.c_str(), dest_dir, wu.name, outdir);
         }
-        printf("%s\n", cmd);
+        printf("result files: %lu, command: %s\n", output_files.size(), cmd);
         retval = system(cmd);
         if (retval) {
            printf("%s: no output file\n", wu.name);
